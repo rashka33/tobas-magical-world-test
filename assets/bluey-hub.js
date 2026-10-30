@@ -1,11 +1,10 @@
-/* Toba's Magical World — Bluey-inspired hub overlay.
-   Build 2026-10-30-bluey-h2c.
-   Adaptive levels live in localStorage key tcw-bluey-levels.
-   P1 is not part of this build. */
+/* Toba's Magical World — premium hub shell (bluey-h2d).
+   Adaptive levels stay in localStorage key tcw-bluey-levels.
+   ART paths match /workspace/toba/art/soft3d/ slots. P1 is not part of this build. */
 (function () {
   "use strict";
 
-  var BUILD = "2026-10-30-bluey-h2c";
+  var BUILD = "2026-10-30-bluey-h2d";
   var STORE = "tcw-bluey-levels";
   var IDS = ["bubbles", "balloons", "feed", "memory", "puzzle", "counting", "patterns", "sorter"];
 
@@ -32,6 +31,7 @@
     sorter: "Sorter"
   };
 
+  /* Soft-3D slots. Real files replace placeholders when the shared box is filled. */
   var ART = {
     bubbles: "assets/art/hub-bubbles.webp",
     balloons: "assets/art/hub-balloons.webp",
@@ -40,7 +40,13 @@
     puzzle: "assets/art/hub-puzzle.webp",
     counting: "assets/art/hub-counting.webp",
     patterns: "assets/art/hub-patterns.webp",
-    sorter: "assets/art/hub-sorter.webp"
+    sorter: "assets/art/hub-sorter.webp",
+    titleLandscape: "assets/art/title-landscape.webp",
+    titlePortrait: "assets/art/title-portrait.webp",
+    leoCheer: "assets/art/leo-cheer.webp",
+    leoWave: "assets/art/leo-wave.webp",
+    logo: "assets/art/logo-toba.webp",
+    banana: "assets/art/banana.webp"
   };
 
   var TILE = {
@@ -98,9 +104,10 @@
   }
 
   var state = load();
-  var screen = "hub";
+  var screen = "title";
   var session = null;
   var root, stage, titleEl;
+  var HOLD_MS = 680;
 
   function needFor(id) {
     return SPEC[id][state[id].level - 1];
@@ -182,14 +189,34 @@
   }
 
   function render() {
-    if (screen === "hub") renderHub();
+    if (screen === "title") renderTitle();
+    else if (screen === "hub") renderHub();
     else if (screen === "grownups") renderGrownups();
     else renderGame(screen);
+    syncChrome();
     fit();
   }
 
+  function renderTitle() {
+    if (titleEl) titleEl.textContent = "Toba's Magical World";
+    var land = window.innerWidth > window.innerHeight;
+    var scene = land ? ART.titleLandscape : ART.titlePortrait;
+    el(
+      '<section class="title-screen' + (land ? " is-land" : "") + '">' +
+        '<div class="title-scene">' +
+          '<img class="title-art" data-slot="' + (land ? "title-landscape" : "title-portrait") + '" src="' + scene + '" alt="" />' +
+          '<div class="logo-lockup" data-logo>' +
+            '<p class="logo-word">To<span class="logo-b" data-logo-b>b</span>a</p>' +
+          "</div>" +
+          '<img class="leo-title" src="' + ART.leoCheer + '" alt="" />' +
+        "</div>" +
+        '<button type="button" id="bluey-play" class="play-btn" data-tap aria-label="Play">Play</button>' +
+      "</section>"
+    );
+  }
+
   function renderHub() {
-    titleEl.textContent = "Toba's Magical World";
+    if (titleEl) titleEl.textContent = "Toba's Magical World";
     var tiles = IDS.map(function (id) {
       var level = state[id].level;
       var pill = level >= 2
@@ -198,17 +225,15 @@
       var badge = level < 2 ? '<span class="new-badge">NEW</span>' : "";
       return (
         '<button type="button" class="hub-tile" data-tap data-game="' + id + '" aria-label="Play ' + NAMES[id] + ", level " + level + '">' +
-          '<span class="hub-circle" style="background:' + TILE[id] + '">' +
+          '<span class="hub-circle">' +
             '<img src="' + ART[id] + '" alt="" />' +
             badge + pill +
           "</span>" +
-          '<span class="hub-label">' + NAMES[id] + "</span>" +
         "</button>"
       );
     }).join("");
     el(
       '<div class="hub">' +
-        '<p class="hub-kicker">Tap a big game</p>' +
         '<div class="hub-grid">' + tiles + "</div>" +
       "</div>"
     );
@@ -262,7 +287,7 @@
           "</div>" +
           '<div class="counting-right">' +
             '<button type="button" class="banana-btn" data-tap aria-label="Count one banana">' +
-              '<span class="banana-emoji" aria-hidden="true">🍌</span>' +
+              '<img src="' + ART.banana + '" alt="" />' +
             "</button>" +
           "</div>" +
         "</div>" +
@@ -278,7 +303,7 @@
       return (
         '<button type="button" class="mem-card' + up + '" data-tap data-card="' + index + '" aria-label="' +
           (card.up || card.matched ? card.face + " card" : "Face-down card") + '">' +
-          '<img class="back" src="assets/art/leo-wave.webp" alt="" />' +
+          '<img class="back" src="' + ART.leoWave + '" alt="" />' +
           '<span class="face" aria-hidden="true">' + card.face + "</span>" +
         "</button>"
       );
@@ -450,19 +475,20 @@
     if (id === "home" || id === "hub") {
       screen = "hub";
       session = null;
-      render();
-      return;
-    }
-    if (id === "grownups") {
+    } else if (id === "title") {
+      screen = "title";
+      session = null;
+    } else if (id === "grownups") {
       screen = "grownups";
       session = null;
-      render();
+    } else if (!SPEC[id]) {
       return;
+    } else {
+      screen = id;
+      session = freshSession(id);
     }
-    if (!SPEC[id]) return;
-    screen = id;
-    session = freshSession(id);
     render();
+    wipe();
   }
 
   function onBanana() {
@@ -519,16 +545,14 @@
   function onRootClick(ev) {
     var t = ev.target;
     if (t.closest("#bluey-home")) {
-      screen = "hub";
-      session = null;
-      render();
+      openGame("hub");
       return;
     }
-    if (t.closest("#bluey-grownups")) {
-      screen = "grownups";
-      render();
+    if (t.closest("#bluey-play")) {
+      openGame("hub");
       return;
     }
+    if (t.closest("#bluey-gear")) return;
     if (t.closest("[data-classic]")) {
       hideOverlay();
       return;
@@ -654,8 +678,22 @@
   }
 
   function fit() {
-    if (screen === "counting") fitCounting();
+    if (screen === "title") fitTitle();
+    else if (screen === "counting") fitCounting();
     else if (screen === "memory") fitMemory();
+  }
+
+  function fitTitle() {
+    var img = stage.querySelector(".title-art");
+    var section = stage.querySelector(".title-screen");
+    if (!img || !section) return;
+    var land = window.innerWidth > window.innerHeight;
+    var next = land ? ART.titleLandscape : ART.titlePortrait;
+    if (img.getAttribute("src") !== next) {
+      img.setAttribute("src", next);
+      img.setAttribute("data-slot", land ? "title-landscape" : "title-portrait");
+    }
+    section.classList.toggle("is-land", land);
   }
 
   function boardBox(board) {
@@ -676,8 +714,6 @@
     monkey.style.width = monkey.style.height = Math.max(36, Math.floor(monkeyS)) + "px";
     var banPx = Math.max(48, Math.floor(ban));
     banana.style.width = banana.style.height = banPx + "px";
-    var emoji = banana.querySelector(".banana-emoji");
-    if (emoji) emoji.style.fontSize = Math.floor(banPx * 0.62) + "px";
     var c = Math.max(16, Math.floor(cell));
     for (var i = 0; i < nums.length; i++) {
       nums[i].style.width = nums[i].style.height = c + "px";
@@ -826,27 +862,113 @@
     if (footer) footer.setAttribute("aria-hidden", "true");
   }
 
+  function syncChrome() {
+    var inGame = screen !== "title" && screen !== "hub";
+    root.classList.toggle("has-home", inGame);
+    root.classList.toggle("is-title", screen === "title");
+    root.classList.toggle("is-hub", screen === "hub");
+    var home = document.getElementById("bluey-home");
+    if (home) {
+      if (inGame) home.removeAttribute("hidden");
+      else home.setAttribute("hidden", "");
+    }
+    var leo = document.querySelector(".hub-leo");
+    if (leo) leo.hidden = screen === "title";
+  }
+
+  function wipe() {
+    var wipeEl = root.querySelector(".bluey-wipe");
+    root.classList.remove("is-settled");
+    if (!wipeEl) {
+      root.classList.add("is-settled");
+      return;
+    }
+    var finished = false;
+    function done() {
+      if (finished) return;
+      finished = true;
+      wipeEl.classList.remove("is-on");
+      wipeEl.hidden = true;
+      root.classList.add("is-settled");
+    }
+    wipeEl.hidden = false;
+    wipeEl.classList.remove("is-on");
+    void wipeEl.offsetWidth;
+    wipeEl.classList.add("is-on");
+    wipeEl.addEventListener("animationend", done, { once: true });
+    window.setTimeout(done, 560);
+  }
+
+  function bindHold(gear) {
+    var active = false;
+    var raf = 0;
+    var start = 0;
+    function frame() {
+      var p = Math.min(1, (Date.now() - start) / HOLD_MS);
+      gear.style.setProperty("--hold", String(p));
+      if (p >= 1) {
+        end(true);
+        return;
+      }
+      raf = window.requestAnimationFrame(frame);
+    }
+    function begin(ev) {
+      if (active) return;
+      active = true;
+      start = Date.now();
+      gear.classList.add("is-holding");
+      try {
+        if (ev && ev.pointerId != null && gear.setPointerCapture) gear.setPointerCapture(ev.pointerId);
+      } catch (e) {}
+      frame();
+    }
+    function end(open) {
+      if (!active && !open) return;
+      active = false;
+      window.cancelAnimationFrame(raf);
+      gear.classList.remove("is-holding");
+      gear.style.setProperty("--hold", "0");
+      if (open) openGame("grownups");
+    }
+    gear.addEventListener("pointerdown", function (ev) {
+      if (ev.button && ev.button !== 0) return;
+      ev.preventDefault();
+      begin(ev);
+    });
+    gear.addEventListener("pointerup", function () { end(false); });
+    gear.addEventListener("pointercancel", function () { end(false); });
+    gear.addEventListener("pointerleave", function () { if (active) end(false); });
+  }
+
   function mount() {
     document.documentElement.classList.add("bluey-lock");
     root = document.createElement("div");
     root.id = "bluey-root";
     root.setAttribute("data-build", BUILD);
+    root.classList.add("is-settled");
     root.innerHTML =
+      '<div class="bluey-wipe" hidden></div>' +
       '<div class="bluey-shell">' +
         '<header class="bluey-top">' +
+          '<img class="hub-leo" src="' + ART.leoWave + '" alt="" />' +
           '<h1 id="bluey-title">Toba\'s Magical World</h1>' +
-          '<button type="button" id="bluey-grownups" class="grownups-open" data-tap>Grown-ups</button>' +
         "</header>" +
         '<div id="bluey-stage"></div>' +
       "</div>" +
-      '<button type="button" id="bluey-home" class="home-btn" data-tap aria-label="Home">🏠</button>';
+      '<button type="button" id="bluey-gear" class="gear-btn" data-tap aria-label="Grown-ups, press and hold">' +
+        '<span class="gear-icon" aria-hidden="true">⚙</span>' +
+        '<svg class="hold-ring" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="20"></circle></svg>' +
+      "</button>" +
+      '<button type="button" id="bluey-home" class="home-btn" data-tap aria-label="Home" hidden>🏠</button>';
     document.body.appendChild(root);
     stage = document.getElementById("bluey-stage");
     titleEl = document.getElementById("bluey-title");
-    /* The bundled page stamps any "Grown-ups" control. Keep that off the hub chrome. */
-    var grownBtn = document.getElementById("bluey-grownups");
-    if (grownBtn) grownBtn.__tcwStamped = true;
     if (titleEl) titleEl.__tcwStamped = true;
+    var gear = document.getElementById("bluey-gear");
+    if (gear) {
+      gear.__tcwStamped = true;
+      bindHold(gear);
+    }
     root.addEventListener("click", onRootClick);
 
     var back = document.createElement("button");

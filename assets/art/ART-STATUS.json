@@ -1,0 +1,93 @@
+{
+  "sourceDir": "/workspace/toba/art/soft3d",
+  "sourceDirExists": false,
+  "slots": {
+    "hub-bubbles": {
+      "state": "placeholder",
+      "missing": "/workspace/toba/art/soft3d/hub-bubbles.png",
+      "file": "assets/art/hub-bubbles.webp"
+    },
+    "hub-balloons": {
+      "state": "placeholder",
+      "missing": "/workspace/toba/art/soft3d/hub-balloons.png",
+      "file": "assets/art/hub-balloons.webp"
+    },
+    "hub-feed": {
+      "state": "placeholder",
+      "missing": "/workspace/toba/art/soft3d/hub-feed.png",
+      "file": "assets/art/hub-feed.webp"
+    },
+    "hub-memory": {
+      "state": "placeholder",
+      "missing": "/workspace/toba/art/soft3d/hub-memory.png",
+      "file": "assets/art/hub-memory.webp"
+    },
+    "hub-puzzle": {
+      "state": "placeholder",
+      "missing": "/workspace/toba/art/soft3d/hub-puzzle.png",
+      "file": "assets/art/hub-puzzle.webp"
+    },
+    "hub-counting": {
+      "state": "placeholder",
+      "missing": "/workspace/toba/art/soft3d/hub-counting.png",
+      "file": "assets/art/hub-counting.webp"
+    },
+    "hub-patterns": {
+      "state": "placeholder",
+      "missing": "/workspace/toba/art/soft3d/hub-patterns.png",
+      "file": "assets/art/hub-patterns.webp"
+    },
+    "hub-sorter": {
+      "state": "placeholder",
+      "missing": "/workspace/toba/art/soft3d/hub-sorter.png",
+      "file": "assets/art/hub-sorter.webp"
+    },
+    "title-landscape": {
+      "state": "placeholder",
+      "missing": "/workspace/toba/art/soft3d/title-landscape.png",
+      "file": "assets/art/title-landscape.webp"
+    },
+    "title-portrait": {
+      "state": "placeholder",
+      "missing": "/workspace/toba/art/soft3d/title-portrait.png",
+      "file": "assets/art/title-portrait.webp"
+    },
+    "leo-cheer": {
+      "state": "placeholder",
+      "missing": "/workspace/toba/art/soft3d/leo-cheer.png",
+      "file": "assets/art/leo-cheer.webp"
+    },
+    "leo-wave": {
+      "state": "placeholder",
+      "missing": "/workspace/toba/art/soft3d/leo-wave.png",
+      "file": "assets/art/leo-wave.webp"
+    },
+    "logo-toba": {
+      "state": "placeholder",
+      "missing": "/workspace/toba/art/soft3d/logo-toba.png",
+      "file": "assets/art/logo-toba.webp"
+    },
+    "banana": {
+      "state": "placeholder",
+      "missing": "/workspace/toba/art/soft3d/banana.png",
+      "file": "assets/art/banana.webp"
+    }
+  },
+  "missing": [
+    "hub-bubbles",
+    "hub-balloons",
+    "hub-feed",
+    "hub-memory",
+    "hub-puzzle",
+    "hub-counting",
+    "hub-patterns",
+    "hub-sorter",
+    "title-landscape",
+    "title-portrait",
+    "leo-cheer",
+    "leo-wave",
+    "logo-toba",
+    "banana"
+  ],
+  "finalArt": false
+}

@@ -1,5 +1,5 @@
 /**
- * Playwright layout checks for the Bluey hub overlay (build 2026-10-30-bluey-h2c).
+ * Playwright layout checks for the Bluey hub overlay (build 2026-10-30-bluey-h2d).
  * Chromium + iPhone user agent. Asserts tap targets stay fully inside the viewport
  * (a banana cut off by the landscape board fails) and memory cards do not overlap.
  *
@@ -62,6 +62,10 @@ async function setVP(page, vp) {
   await page.setViewportSize({ width: vp.w, height: vp.h });
   await page.evaluate(() => window.__bluey && window.__bluey.fit());
   await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+}
+
+async function settled(page) {
+  await page.waitForFunction(() => document.getElementById("bluey-root")?.classList.contains("is-settled"), null, { timeout: 4000 });
 }
 
 async function tapReport(page) {
@@ -229,7 +233,7 @@ async function main() {
   const sw = readFileSync(join(root, "sw.js"), "utf8");
   const index = readFileSync(join(root, "index.html"), "utf8");
   const hub = readFileSync(join(root, "assets/bluey-hub.js"), "utf8");
-  check("sw versioned cache", sw.includes('var CACHE = "tcw-" + BUILD_ID') && sw.includes("2026-10-30-bluey-h2c"));
+  check("sw versioned cache", sw.includes('var CACHE = "tcw-" + BUILD_ID') && sw.includes("2026-10-30-bluey-h2d"));
   check("sw precaches hub and art", ["bluey-hub.css", "bluey-hub.js", "hub-feed.webp", "leo-wave.webp", "banana.webp"].every((s) => sw.includes(s)));
   check("sw network-first index.html", /function networkFirst/.test(sw) && /isIndex\(url\)/.test(sw) && sw.includes("networkFirst(req)"));
   check("index wires hub and one-line bridge", index.includes("assets/bluey-hub.css") && index.includes("assets/bluey-hub.js") && /window\.__tcwGo=function/.test(index));
@@ -265,15 +269,57 @@ async function main() {
     const page = await context.newPage();
     page.on("pageerror", (err) => pageErrors.push(String(err)));
     await page.goto("http://127.0.0.1:8765/index.html?nosw=1", { waitUntil: "domcontentloaded" });
-    await page.waitForSelector(".hub-tile", { timeout: 15000 });
+    await page.waitForSelector(".title-screen", { timeout: 15000 });
+    await settled(page);
 
     const build = await page.evaluate(() => ({
       stamp: document.getElementById("tcw-buildstamp")?.textContent || "",
       root: document.getElementById("bluey-root")?.getAttribute("data-build") || "",
       bridge: typeof window.__tcwGo,
     }));
-    check("build id stamped", build.stamp.includes("2026-10-30-bluey-h2c") && build.root === "2026-10-30-bluey-h2c");
+    check("build id stamped", build.stamp.includes("2026-10-30-bluey-h2d") && build.root === "2026-10-30-bluey-h2d");
     check("bridge is a function", build.bridge === "function");
+
+    async function titleChecks(label, slot) {
+      const info = await page.evaluate(() => {
+        const b = document.querySelector("[data-logo-b]").getBoundingClientRect();
+        const play = document.querySelector("#bluey-play").getBoundingClientRect();
+        const leo = document.querySelector(".leo-title").getBoundingClientRect();
+        const ix = Math.min(b.right, play.right) - Math.max(b.left, play.left);
+        const iy = Math.min(b.bottom, play.bottom) - Math.max(b.top, play.top);
+        return {
+          overlap: ix > 1 && iy > 1,
+          playH: play.height,
+          leoW: leo.width,
+          scene: document.querySelector(".title-art")?.getAttribute("data-slot") || "",
+          bW: b.width,
+        };
+      });
+      check(label + " play misses letter b", !info.overlap && info.bW > 8, JSON.stringify(info));
+      check(label + " play is huge", info.playH >= 88, "h " + info.playH);
+      check(label + " leo on title", info.leoW > 36, "leo " + info.leoW);
+      check(label + " title art", info.scene === slot, info.scene);
+      const taps = await tapReport(page);
+      check(label + " tap targets", taps.problems.length === 0, taps.problems.slice(0, 6).join("; "));
+    }
+
+    await titleChecks("title portrait", "title-portrait");
+    await page.screenshot({ path: join(outDir, "title-portrait.png") });
+    await setVP(page, { w: 844, h: 390 });
+    await titleChecks("title landscape", "title-landscape");
+    await page.screenshot({ path: join(outDir, "title-landscape.png") });
+    await setVP(page, { w: 667, h: 375 });
+    await titleChecks("title short landscape", "title-landscape");
+    await setVP(page, { w: 390, h: 844 });
+
+    await page.locator("#bluey-play").click();
+    await page.waitForSelector(".hub-tile", { timeout: 15000 });
+    await settled(page);
+
+    const kidText = await page.locator("#bluey-root").innerText();
+    check("no grown-ups text link on the hub", !/grown-ups/i.test(kidText));
+    check("no labels under hub tiles", await page.locator(".hub-label").count() === 0);
+    check("hub shows leo wave", await page.locator(".hub-leo").count() === 1);
 
     const pills = await page.locator(".level-pill").count();
     const newBadges = await page.locator(".new-badge").count();
@@ -291,6 +337,28 @@ async function main() {
     await setVP(page, { w: 390, h: 844 });
     const portTaps = await tapReport(page);
     check("portrait hub tap targets fully in viewport", portTaps.problems.length === 0, portTaps.problems.slice(0, 6).join("; "));
+
+    await page.locator("#bluey-gear").click();
+    check("quick gear tap stays on hub", (await page.evaluate(() => window.__bluey.screen())) === "hub");
+    await page.evaluate(() => {
+      const gear = document.getElementById("bluey-gear");
+      const r = gear.getBoundingClientRect();
+      gear.dispatchEvent(new PointerEvent("pointerdown", {
+        bubbles: true, cancelable: true, pointerId: 1, pointerType: "touch", button: 0,
+        clientX: r.x + r.width / 2, clientY: r.y + r.height / 2,
+      }));
+    });
+    await page.waitForTimeout(320);
+    await page.screenshot({ path: join(outDir, "grownups-hold-gate.png") });
+    const hold = await page.evaluate(() => {
+      const gear = document.getElementById("bluey-gear");
+      return { holding: gear.classList.contains("is-holding"), p: Number(gear.style.getPropertyValue("--hold") || "0") };
+    });
+    check("hold gate is visible while pressed", hold.holding && hold.p > 0.2, JSON.stringify(hold));
+    await page.evaluate(() => {
+      document.getElementById("bluey-gear").dispatchEvent(new PointerEvent("pointerup", { bubbles: true, pointerId: 1, pointerType: "touch" }));
+    });
+    check("release before the hold finishes stays on hub", (await page.evaluate(() => window.__bluey.screen())) === "hub");
 
     for (const vp of VIEWPORTS) {
       await setVP(page, vp);
@@ -380,34 +448,50 @@ async function main() {
     server.kill("SIGTERM");
   }
 
+  let artStatus = { missing: [], finalArt: false, sourceDirExists: false };
+  try { artStatus = JSON.parse(readFileSync(join(root, "assets/art/ART-STATUS.json"), "utf8")); } catch (e) {}
   const summary = {
-    build: "2026-10-30-bluey-h2c",
+    build: "2026-10-30-bluey-h2d",
     pass: passes.length,
     fail: fails.length,
     fails,
+    artFinal: !!artStatus.finalArt,
+    artMissing: artStatus.missing || [],
   };
-  writeFileSync(join(outDir, "h2c-results.json"), JSON.stringify(summary, null, 2));
+  writeFileSync(join(outDir, "h2d-results.json"), JSON.stringify(summary, null, 2));
 
   const shots = [
+    "title-portrait.png",
+    "title-landscape.png",
     "hub-level-stars.png",
     "hub-level-stars-landscape.png",
-    ...VIEWPORTS.map((vp) => "counting-L3-" + vp.w + "x" + vp.h + ".png"),
-    ...[1, 2, 3].flatMap((level) => VIEWPORTS.map((vp) => "memory-L" + level + "-" + vp.w + "x" + vp.h + ".png")),
+    "grownups-hold-gate.png",
+    "counting-L3-844x390.png",
+    "counting-L3-667x375.png",
+    "memory-L3-844x390.png",
+    "memory-L3-667x375.png",
   ];
+  const missing = (artStatus.missing || []).map((slot) => "- `" + slot + "` — expected `/workspace/toba/art/soft3d/" + slot + ".png` (or .webp). Placeholder: `assets/art/" + slot + ".webp`.");
   const report = [
-    "# REPORT h2c",
+    "# REPORT h2d",
     "",
-    "Build `2026-10-30-bluey-h2c` on branch `cursor/bluey-h2c-rebuild-7a6d`. Not merged. Live coloring-world repo was not changed.",
+    "Build `2026-10-30-bluey-h2d` on branch `cursor/bluey-h2c-rebuild-7a6d`. Not merged. Not published. Live coloring-world repo was not changed.",
     "",
-    "Bluey-inspired hub overlay (`assets/bluey-hub.css`, `assets/bluey-hub.js`) on the bundled app. Adaptive levels in `localStorage` key `tcw-bluey-levels` (L1–L3). Win moves a game up; two misses move it down. Sorter tray is 3 / 5 / 7 and grows from L2. No P1 (no avatar profile, no `strings.js`).",
+    "Kept adaptive levels (`tcw-bluey-levels`, win up, two misses down, sorter 3/5/7) and the landscape layouts (Counting two-column, Memory L3 6×2, level pills). Rebuilt the hub shell: seasonal title, sticker-circle tiles with no kid labels, Leo on the title and the hub, a press-and-hold gear instead of a Grown-ups text link, and a soft wipe between title, hub, and activities.",
     "",
-    "Offline service worker `sw.js`: versioned cache `tcw-2026-10-30-bluey-h2c`, precached shell and `assets/art/*.webp`, network-first `index.html`.",
+    "Offline service worker cache `tcw-2026-10-30-bluey-h2d`. Precache includes the soft-3D slots. `index.html` stays network-first.",
     "",
-    "Critiquito h2c layout: landscape Counting is two columns (monkey + number circles on the left, banana button on the right). L3 numbers are 2×5. No kid-facing Goal chip. Memory uses star progress and Leo-wave card backs. L3 portrait is 3×4 near-square cards; L3 landscape is 6×2.",
+    "## Art",
+    "",
+    artStatus.finalArt
+      ? "Soft-3D art was ingested from `/workspace/toba/art/soft3d/`."
+      : "The shared box `/workspace/toba/art/soft3d/` was " + (artStatus.sourceDirExists ? "incomplete" : "not on disk") + ". The ART map points at those slots. Shipped images are marked preview placeholders, not final art.",
+    "",
+    missing.length ? missing.join("\n") : "No slots missing.",
     "",
     "## Tests",
     "",
-    "Playwright Chromium, iPhone user agent. Viewports 390×844, 375×667, 844×390, 667×375, 1280×800.",
+    "Playwright Chromium, iPhone user agent. Viewports 390×844, 375×667, 844×390, 667×375, 1280×800, levels L1–L3. Run with `node tests/h2c-layout.mjs`.",
     "",
     "- Pass: **" + passes.length + "**",
     "- Fail: **" + fails.length + "**",
@@ -419,7 +503,7 @@ async function main() {
     ...shots.map((name) => "- `artifacts/" + name + "`"),
     "",
   ].join("\n");
-  writeFileSync(join(outDir, "REPORT-h2c.md"), report);
+  writeFileSync(join(outDir, "REPORT-h2d.md"), report);
   console.log(JSON.stringify(summary, null, 2));
   if (fails.length) process.exit(1);
 }
