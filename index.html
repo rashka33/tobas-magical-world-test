@@ -28,7 +28,8 @@
          lives outside the artifact's routes and 404s. -->
     <link rel="icon" href="data:," />
     <title>Toba's Coloring World</title>
-    <link rel="stylesheet" href="assets/app.css?build=2026-10-30-fix3-abc-b" />
+    <link rel="stylesheet" href="assets/app.css?build=2026-10-30-bluey-h2c" />
+    <link rel="stylesheet" href="assets/bluey-hub.css?build=2026-10-30-bluey-h2c" />
     <style>
       /* First-open name gate + end-of-page developer credit.
          The gate only appears on a device that has never set a name:
@@ -160,28 +161,21 @@
     </style>
   
     <script>
-      /* fix3-abc: unregister any service workers on this origin and clear Cache Storage
-         so an old PWA / live-site SW cannot keep serving a stale app.js. */
+      /* bluey-h2c: versioned offline service worker.
+         Cache name is tied to the build. Assets are precached.
+         index.html stays network-first so a fresh link is not stuck
+         on an old shell. ?nosw=1 skips registration (layout tests). */
       (function () {
-        try {
-          if (navigator.serviceWorker && navigator.serviceWorker.getRegistrations) {
-            navigator.serviceWorker.getRegistrations().then(function (regs) {
-              regs.forEach(function (r) { try { r.unregister(); } catch (e) {} });
-            }).catch(function () {});
-          }
-        } catch (e) {}
-        try {
-          if (window.caches && caches.keys) {
-            caches.keys().then(function (keys) {
-              keys.forEach(function (k) { try { caches.delete(k); } catch (e) {} });
-            }).catch(function () {});
-          }
-        } catch (e) {}
+        if (!("serviceWorker" in navigator)) return;
+        try { if (/[?&]nosw=1/.test(location.search)) return; } catch (e) { return; }
+        window.addEventListener("load", function () {
+          navigator.serviceWorker.register("sw.js?build=2026-10-30-bluey-h2c").catch(function () {});
+        });
       })();
     </script>
 </head>
   <body>
-    <!-- Toba's Coloring World — STANDALONE WEB APP (build 2026-10-30-fix3-abc-b).
+    <!-- Toba's Coloring World — STANDALONE WEB APP (build 2026-10-30-bluey-h2c).
          This page plus the assets/ folder next to it IS the whole app:
          it is packaged for independent hosting (GitHub Pages) and runs
          with no platform wrapper, no account, no sign-in and no
@@ -204,7 +198,7 @@
          with chunky neon markers (rainbow + 8 neon colors), a big
          eraser, undo, clear and save; saved glow drawings go into the
          same on-device gallery as every other drawing.
-         AUDIO (gateway build 2026-10-30-fix3-abc-b): every spoken event
+         AUDIO (gateway build 2026-10-30-bluey-h2c): every spoken event
          routes through ONE gateway (window.__TCW_GW, installed before
          the app loads). In Somali mode the gateway may only play the
          event's registered Ubax recording via Web Audio, or stay
@@ -248,7 +242,7 @@
     <footer id="tcw-footer">
       <p class="tcw-made">💛 Made for kids, with love</p>
       <p class="tcw-dev">Developed by <b>Abdirashid Abi</b></p>
-      <p class="tcw-dev" id="tcw-buildstamp">Build 2026-10-30-fix3-abc-b</p>
+      <p class="tcw-dev" id="tcw-buildstamp">Build 2026-10-30-bluey-h2c</p>
       <div id="tcw-install" hidden>
         <button id="tcw-install-btn" type="button">📲 Add Coloring World to your Home Screen</button>
         <p id="tcw-install-tip" hidden></p>
@@ -303,7 +297,7 @@
 
     <script>
       /* ================================================================
-         SINGLE AUDIO GATEWAY — build 2026-10-30-fix3-abc-b.
+         SINGLE AUDIO GATEWAY — build 2026-10-30-bluey-h2c.
          The ONLY speech enforcement in the app (panel verdict, round 3:
          stop patching around the edges; route everything through one
          gateway and make Somali recorded-only BY CONSTRUCTION).
@@ -349,7 +343,7 @@
          is stamped in the footer and injected into Grown-ups.
          ================================================================ */
       (function () {
-        var BUILD_ID = "2026-10-30-fix3-abc-b";
+        var BUILD_ID = "2026-10-30-bluey-h2c";
         window.__TCW_BUILD = BUILD_ID;
         (function(){var el=document.getElementById("tcw-buildstamp"); if(el) el.textContent="Build "+BUILD_ID;})();
 
@@ -962,7 +956,7 @@
           var gate = document.getElementById("tcw-gate");
           if (gate) gate.hidden = true;
           var s = document.createElement("script");
-          s.src = "assets/app.js?build=" + (window.__TCW_BUILD || "2026-10-30-fix3-abc-b");
+          s.src = "assets/app.js?build=" + (window.__TCW_BUILD || "2026-10-30-bluey-h2c");
           document.body.appendChild(s);
         }
 
@@ -1229,6 +1223,8 @@
         });
       })();
     </script>
+    <script>window.__tcwGo=function(id){window.dispatchEvent(new CustomEvent("tcw-go",{detail:id}));};</script>
+    <script src="assets/bluey-hub.js?build=2026-10-30-bluey-h2c"></script>
 <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "eba91a29a157438fa8e3d8ebedfb2f0b"}'></script><!-- End Cloudflare Web Analytics -->
   </body>
 </html>
