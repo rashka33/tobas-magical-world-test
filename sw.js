@@ -1,7 +1,7 @@
-/* Offline shell for Toba's Magical World — build 2026-10-30-bluey-h2e.
+/* Offline shell for Toba's Magical World — build 2026-10-30-bluey-h2e2.
    Versioned cache. Precache the app shell and hub art.
    index.html is network-first so a fresh link is not stuck on an old shell. */
-var BUILD_ID = "2026-10-30-bluey-h2e";
+var BUILD_ID = "2026-10-30-bluey-h2e2";
 var CACHE = "tcw-" + BUILD_ID;
 
 var PRECACHE = [

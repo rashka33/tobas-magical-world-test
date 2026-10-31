@@ -64,12 +64,48 @@ def save_webp(im, slot, max_side=512):
     return path
 
 
-def derive_banana(feed_path):
-    """Fruit crop from hub-feed so the counting button is real art, not a watermark."""
-    im = Image.open(feed_path).convert("RGBA")
-    # The big banana sits in the bowl, right of center.
-    crop = im.crop((500, 340, 860, 700))
-    return crop
+def draw_soft_banana():
+    """One soft-3D banana the child can recognize. Not a hub-feed crop."""
+    import math
+    S = 640
+    body = Image.new("RGBA", (S, S), (0, 0, 0, 0))
+    highlight = Image.new("RGBA", (S, S), (0, 0, 0, 0))
+    bd, hd = ImageDraw.Draw(body), ImageDraw.Draw(highlight)
+
+    def center(t):
+        # Lower-left stem, belly in the middle, tip upper-right.
+        x = 90 + t * 460
+        y = 470 - math.sin(t * math.pi) * 250 - t * 30
+        return x, y
+
+    for i in range(0, 81):
+        t = i / 80
+        x, y = center(t)
+        radius = 18 + math.sin(t * math.pi) * 58
+        shade = int(40 + 30 * math.sin(t * math.pi))
+        bd.ellipse([x - radius, y - radius, x + radius, y + radius], fill=(255, 196 + shade // 8, 48, 255))
+        hr = radius * 0.42
+        hx, hy = x - radius * 0.22, y - radius * 0.28
+        hd.ellipse([hx - hr, hy - hr, hx + hr, hy + hr], fill=(255, 244, 170, 210))
+
+    body.alpha_composite(highlight)
+    d = ImageDraw.Draw(body)
+    x0, y0 = center(0.02)
+    d.ellipse([x0 - 22, y0 - 16, x0 + 28, y0 + 26], fill=(110, 72, 36, 255))
+    d.polygon([(x0 - 6, y0 - 8), (x0 - 28, y0 - 46), (x0 + 8, y0 - 18)], fill=(86, 54, 28, 255))
+    x1, y1 = center(0.98)
+    d.ellipse([x1 - 16, y1 - 16, x1 + 18, y1 + 18], fill=(74, 48, 24, 255))
+
+    bbox = body.getchannel("A").point(lambda p: 255 if p > 12 else 0).getbbox()
+    body = body.crop(bbox)
+    pad = 28
+    canvas = Image.new("RGBA", (body.size[0] + pad * 2, body.size[1] + pad * 2), (0, 0, 0, 0))
+    shadow = Image.new("RGBA", canvas.size, (0, 0, 0, 0))
+    ImageDraw.Draw(shadow).bitmap((pad + 10, pad + 16), body.split()[-1], fill=(120, 70, 10, 70))
+    canvas.alpha_composite(shadow.filter(ImageFilter.GaussianBlur(8)))
+    canvas.alpha_composite(body, (pad, pad))
+    canvas.thumbnail((512, 512), Image.Resampling.LANCZOS)
+    return canvas
 
 
 def sticker_disc(fill, label, motif):
@@ -310,21 +346,18 @@ def main():
     for slot in P1:
         take(slot, "p1")
 
-    feed = find_source("hub-feed")
     banana_src = find_source("banana")
     if banana_src:
         save_webp(Image.open(banana_src), "banana", 512)
         status["slots"]["banana"] = {"state": "ingested", "from": banana_src, "file": "assets/art/banana.webp"}
-    elif feed and "hub-feed" not in missing:
-        save_webp(derive_banana(feed), "banana", 512)
-        status["slots"]["banana"] = {
-            "state": "derived",
-            "from": feed,
-            "file": "assets/art/banana.webp",
-            "note": "Cropped from hub-feed. No banana plate was in the batch.",
-        }
     else:
-        missing.append("banana")
+        # Do not crop hub-feed here. That crop reads as a monkey, not a tap banana.
+        save_webp(draw_soft_banana(), "banana", 512)
+        status["slots"]["banana"] = {
+            "state": "banana-button",
+            "file": "assets/art/banana.webp",
+            "note": "Dedicated banana picture. The counting monkey stays the hub-feed circle.",
+        }
 
     # Required art must be real files. Do not write preview watermarks.
     required_missing = [name for name in missing if not name.startswith("p1/") and name not in ("banana",)]

@@ -1,5 +1,5 @@
 /**
- * Playwright layout checks for the Bluey hub overlay (build 2026-10-30-bluey-h2e).
+ * Playwright layout checks for the Bluey hub overlay (build 2026-10-30-bluey-h2e2).
  * Chromium + iPhone user agent. Asserts tap targets stay fully inside the viewport
  * (a banana cut off by the landscape board fails) and memory cards do not overlap.
  *
@@ -190,24 +190,48 @@ async function countingChecks(page, vp) {
         inside: r.left >= b.left - 1 && r.top >= b.top - 1 && r.right <= b.right + 1 && r.bottom <= b.bottom + 1,
       };
     });
-    const ban = document.querySelector(".banana-btn").getBoundingClientRect();
+    const banEl = document.querySelector(".banana-btn");
+    const ban = banEl.getBoundingClientRect();
+    const banImg = banEl.querySelector("img");
     const nums = [...document.querySelectorAll(".num-circle")].map((el) => el.getBoundingClientRect());
     const left = document.querySelector(".counting-left").getBoundingClientRect();
     const right = document.querySelector(".counting-right").getBoundingClientRect();
     const text = document.querySelector("#bluey-root").innerText || "";
-    const label = document.querySelector(".banana-btn").getAttribute("aria-label") || "";
+    const label = banEl.getAttribute("aria-label") || "";
     const monkey = document.querySelector(".monkey-wrap img");
+    let yellow = 0;
+    if (banImg && banImg.naturalWidth > 0) {
+      const canvas = document.createElement("canvas");
+      canvas.width = 24;
+      canvas.height = 24;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(banImg, 0, 0, 24, 24);
+      const data = ctx.getImageData(0, 0, 24, 24).data;
+      let opaque = 0;
+      let yel = 0;
+      for (let i = 0; i < data.length; i += 4) {
+        const r = data[i], g = data[i + 1], b = data[i + 2], a = data[i + 3];
+        if (a < 40) continue;
+        opaque++;
+        if (r > 190 && g > 150 && b < 130 && r > b + 40) yel++;
+      }
+      yellow = opaque ? yel / opaque : 0;
+    }
+    const numRight = Math.max.apply(null, nums.map((r) => r.right));
+    const numBottom = Math.max.apply(null, nums.map((r) => r.bottom));
     return {
       land: board.classList.contains("is-land"),
       pieces,
       ban: { x: ban.x, y: ban.y, w: ban.width, h: ban.height, right: ban.right, bottom: ban.bottom },
       nums: nums.map((r) => ({ x: r.x, y: r.y, w: r.width, h: r.height })),
-      sideBySide: right.x >= left.x + left.width * 0.4,
-      stacked: ban.y >= nums[0].y + nums[0].height - 2,
+      sideBySide: ban.x >= numRight - 12,
+      stacked: ban.y >= numBottom - 8,
       text,
       label,
       monkeySrc: monkey ? monkey.getAttribute("src") : "",
       monkeyW: monkey ? monkey.naturalWidth : 0,
+      bananaSrc: banImg ? banImg.getAttribute("src") || "" : "",
+      yellow,
       filled: document.querySelectorAll(".num-circle.is-on").length,
     };
   });
@@ -215,6 +239,7 @@ async function countingChecks(page, vp) {
   const outside = info.pieces.filter((p) => !p.inside || p.x < -1 || p.y < -1 || p.right > vp.w + 1 || p.bottom > vp.h + 1);
   check(name + " pieces inside board and viewport", outside.length === 0, JSON.stringify(outside.map((p) => p.cls)));
   check(name + " banana big", info.ban.w >= 48 && info.ban.h >= 48, JSON.stringify(info.ban));
+  check(name + " banana picture is a banana", (info.bananaSrc || "").includes("banana.webp") && !(info.bananaSrc || "").includes("hub-feed") && info.yellow >= 0.45, "yellow " + info.yellow + " src " + info.bananaSrc);
   check(name + " no Goal chip", !/goal/i.test(info.text));
   check(name + " banana aria only", info.label.toLowerCase().includes("banana") && !/goal/i.test(info.label));
   check(name + " monkey art", (info.monkeySrc || "").includes("hub-feed") && info.monkeyW > 0);
@@ -233,7 +258,7 @@ async function main() {
   const sw = readFileSync(join(root, "sw.js"), "utf8");
   const index = readFileSync(join(root, "index.html"), "utf8");
   const hub = readFileSync(join(root, "assets/bluey-hub.js"), "utf8");
-  check("sw versioned cache", sw.includes('var CACHE = "tcw-" + BUILD_ID') && sw.includes("2026-10-30-bluey-h2e"));
+  check("sw versioned cache", sw.includes('var CACHE = "tcw-" + BUILD_ID') && sw.includes("2026-10-30-bluey-h2e2"));
   check("sw precaches hub and art", ["bluey-hub.css", "bluey-hub.js", "hub-feed.webp", "leo-wave.webp", "banana.webp"].every((s) => sw.includes(s)));
   check("sw network-first index.html", /function networkFirst/.test(sw) && /isIndex\(url\)/.test(sw) && sw.includes("networkFirst(req)"));
   check("index wires hub and one-line bridge", index.includes("assets/bluey-hub.css") && index.includes("assets/bluey-hub.js") && /window\.__tcwGo=function/.test(index));
@@ -277,7 +302,7 @@ async function main() {
       root: document.getElementById("bluey-root")?.getAttribute("data-build") || "",
       bridge: typeof window.__tcwGo,
     }));
-    check("build id stamped", build.stamp.includes("2026-10-30-bluey-h2e") && build.root === "2026-10-30-bluey-h2e");
+    check("build id stamped", build.stamp.includes("2026-10-30-bluey-h2e2") && build.root === "2026-10-30-bluey-h2e2");
     check("bridge is a function", build.bridge === "function");
 
     async function titleChecks(label, slot) {
@@ -372,6 +397,7 @@ async function main() {
       await setVP(page, vp);
       await page.evaluate(() => window.__bluey.open("counting"));
       await page.waitForSelector(".banana-btn");
+      await settled(page);
       await page.evaluate(() => window.__bluey.fit());
       const before = await tapReport(page);
       check("counting " + vp.w + "x" + vp.h + " tap targets", before.problems.length === 0, before.problems.slice(0, 8).join("; "));
@@ -395,6 +421,7 @@ async function main() {
           window.__bluey.fit();
         }, level);
         await page.waitForSelector(".mem-card");
+        await settled(page);
         const geo = await memoryGeometry(page);
         const tag = "memory L" + level + " " + vp.w + "x" + vp.h;
         check(tag + " card count", geo.cards.length === [0, 6, 8, 12][level], "cards " + geo.cards.length);
@@ -459,14 +486,14 @@ async function main() {
   let artStatus = { missing: [], finalArt: false, sourceDirExists: false };
   try { artStatus = JSON.parse(readFileSync(join(root, "assets/art/ART-STATUS.json"), "utf8")); } catch (e) {}
   const summary = {
-    build: "2026-10-30-bluey-h2e",
+    build: "2026-10-30-bluey-h2e2",
     pass: passes.length,
     fail: fails.length,
     fails,
     artFinal: !!artStatus.finalArt,
     artMissing: artStatus.missing || [],
   };
-  writeFileSync(join(outDir, "h2e-results.json"), JSON.stringify(summary, null, 2));
+  writeFileSync(join(outDir, "h2e2-results.json"), JSON.stringify(summary, null, 2));
 
   const shots = [
     "title-portrait.png",
@@ -481,13 +508,15 @@ async function main() {
   ];
   const missing = (artStatus.missing || []).map((slot) => "- `" + slot + "` — expected `/workspace/toba/art/soft3d/" + slot + ".png` (or .webp). Placeholder: `assets/art/" + slot + ".webp`.");
   const report = [
-    "# REPORT h2e",
+    "# REPORT h2e2",
     "",
-    "Build `2026-10-30-bluey-h2e` on branch `cursor/bluey-h2c-rebuild-7a6d`. Not merged. Not published. Live coloring-world repo was not changed.",
+    "Build `2026-10-30-bluey-h2e2` on branch `cursor/bluey-h2c-rebuild-7a6d`. Not merged. Not published. Live coloring-world repo was not changed.",
     "",
-    "Soft-3D batch 1 is in the hub circles, Leo, and logo. Batch 2 title plates (`title-portrait` 720×1280, `title-landscape` 1280×720) are the seasonal title backgrounds. The logo sits above Play with at least 24px of clearance so Play does not cover the letter b. Counting's monkey is a circular crop of hub-feed. Memory card backs are leo-wave. No kid-visible preview labels. Dress-up and camel art is mapped but not shown, because those activities are not in this hub. `assets/art/p1/` is wired for later and there is no profile UI.",
+    "Counting fix: the right-hand control is a banana picture button again, not the hub-feed monkey crop. Landscape keeps the small hub-feed monkey and the number circles on the left, and the big banana on the right, fully on screen. Portrait puts the banana under the numbers. The tap suite checks the banana is present, mostly yellow, and inside the viewport.",
     "",
-    "Levels and landscape layouts are unchanged. Service worker cache is `tcw-2026-10-30-bluey-h2e` (versioned, precache, network-first index.html).",
+    "Soft-3D hub, seasonal titles, logo clearance, leo-wave memory backs, and level layouts are otherwise unchanged. No profile UI.",
+    "",
+    "Levels and landscape layouts are unchanged. Service worker cache is `tcw-2026-10-30-bluey-h2e2` (versioned, precache, network-first index.html).",
     "",
     "## Art",
     "",
@@ -511,7 +540,7 @@ async function main() {
     ...shots.map((name) => "- `artifacts/" + name + "`"),
     "",
   ].join("\n");
-  writeFileSync(join(outDir, "REPORT-h2e.md"), report);
+  writeFileSync(join(outDir, "REPORT-h2e2.md"), report);
   console.log(JSON.stringify(summary, null, 2));
   if (fails.length) process.exit(1);
 }

@@ -1,10 +1,10 @@
-/* Toba's Magical World — premium hub shell (bluey-h2e).
+/* Toba's Magical World — premium hub shell (bluey-h2e2).
    Adaptive levels stay in localStorage key tcw-bluey-levels.
    ART paths match /workspace/toba/art/soft3d/ slots. P1 is not part of this build. */
 (function () {
   "use strict";
 
-  var BUILD = "2026-10-30-bluey-h2e";
+  var BUILD = "2026-10-30-bluey-h2e2";
   var STORE = "tcw-bluey-levels";
   var IDS = ["bubbles", "balloons", "feed", "memory", "puzzle", "counting", "patterns", "sorter"];
 
