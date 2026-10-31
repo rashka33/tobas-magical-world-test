@@ -1,0 +1,146 @@
+{
+  "sourceDirs": [
+    "/home/ubuntu/.cursor/projects/workspace/uploads/soft3d-batch1/soft3d"
+  ],
+  "sourceDirExists": true,
+  "slots": {
+    "hub-bubbles": {
+      "state": "ingested",
+      "from": "/home/ubuntu/.cursor/projects/workspace/uploads/soft3d-batch1/soft3d/hub-bubbles.png",
+      "file": "assets/art/hub-bubbles.webp"
+    },
+    "hub-balloons": {
+      "state": "ingested",
+      "from": "/home/ubuntu/.cursor/projects/workspace/uploads/soft3d-batch1/soft3d/hub-balloons.png",
+      "file": "assets/art/hub-balloons.webp"
+    },
+    "hub-feed": {
+      "state": "ingested",
+      "from": "/home/ubuntu/.cursor/projects/workspace/uploads/soft3d-batch1/soft3d/hub-feed.png",
+      "file": "assets/art/hub-feed.webp"
+    },
+    "hub-memory": {
+      "state": "ingested",
+      "from": "/home/ubuntu/.cursor/projects/workspace/uploads/soft3d-batch1/soft3d/hub-memory.png",
+      "file": "assets/art/hub-memory.webp"
+    },
+    "hub-puzzle": {
+      "state": "ingested",
+      "from": "/home/ubuntu/.cursor/projects/workspace/uploads/soft3d-batch1/soft3d/hub-puzzle.png",
+      "file": "assets/art/hub-puzzle.webp"
+    },
+    "hub-counting": {
+      "state": "ingested",
+      "from": "/home/ubuntu/.cursor/projects/workspace/uploads/soft3d-batch1/soft3d/hub-counting.png",
+      "file": "assets/art/hub-counting.webp"
+    },
+    "hub-patterns": {
+      "state": "ingested",
+      "from": "/home/ubuntu/.cursor/projects/workspace/uploads/soft3d-batch1/soft3d/hub-patterns.png",
+      "file": "assets/art/hub-patterns.webp"
+    },
+    "hub-sorter": {
+      "state": "ingested",
+      "from": "/home/ubuntu/.cursor/projects/workspace/uploads/soft3d-batch1/soft3d/hub-sorter.png",
+      "file": "assets/art/hub-sorter.webp"
+    },
+    "leo-wave": {
+      "state": "ingested",
+      "from": "/home/ubuntu/.cursor/projects/workspace/uploads/soft3d-batch1/soft3d/leo-wave.png",
+      "file": "assets/art/leo-wave.webp"
+    },
+    "leo-cheer": {
+      "state": "ingested",
+      "from": "/home/ubuntu/.cursor/projects/workspace/uploads/soft3d-batch1/soft3d/leo-cheer.png",
+      "file": "assets/art/leo-cheer.webp"
+    },
+    "logo-toba": {
+      "state": "ingested",
+      "from": "/home/ubuntu/.cursor/projects/workspace/uploads/soft3d-batch1/soft3d/logo-toba.png",
+      "file": "assets/art/logo-toba.webp"
+    },
+    "title-landscape": {
+      "state": "ingested",
+      "from": "/home/ubuntu/.cursor/projects/workspace/uploads/soft3d-batch1/soft3d/title-landscape.png",
+      "file": "assets/art/title-landscape.webp"
+    },
+    "title-portrait": {
+      "state": "ingested",
+      "from": "/home/ubuntu/.cursor/projects/workspace/uploads/soft3d-batch1/soft3d/title-portrait.png",
+      "file": "assets/art/title-portrait.webp"
+    },
+    "hub-dressup": {
+      "state": "ingested",
+      "from": "/home/ubuntu/.cursor/projects/workspace/uploads/soft3d-batch1/soft3d/hub-dressup.png",
+      "file": "assets/art/hub-dressup.webp"
+    },
+    "hub-camel": {
+      "state": "ingested",
+      "from": "/home/ubuntu/.cursor/projects/workspace/uploads/soft3d-batch1/soft3d/hub-camel.png",
+      "file": "assets/art/hub-camel.webp"
+    },
+    "leo-hello": {
+      "state": "ingested",
+      "from": "/home/ubuntu/.cursor/projects/workspace/uploads/soft3d-batch1/soft3d/leo-hello.png",
+      "file": "assets/art/leo-hello.webp"
+    },
+    "leo-talk": {
+      "state": "ingested",
+      "from": "/home/ubuntu/.cursor/projects/workspace/uploads/soft3d-batch1/soft3d/leo-talk.png",
+      "file": "assets/art/leo-talk.webp"
+    },
+    "p1/avatar-1": {
+      "state": "ingested",
+      "from": "/home/ubuntu/.cursor/projects/workspace/uploads/soft3d-batch1/soft3d/p1/avatar-1.png",
+      "file": "assets/art/p1/avatar-1.webp"
+    },
+    "p1/avatar-2": {
+      "state": "ingested",
+      "from": "/home/ubuntu/.cursor/projects/workspace/uploads/soft3d-batch1/soft3d/p1/avatar-2.png",
+      "file": "assets/art/p1/avatar-2.webp"
+    },
+    "p1/avatar-3": {
+      "state": "ingested",
+      "from": "/home/ubuntu/.cursor/projects/workspace/uploads/soft3d-batch1/soft3d/p1/avatar-3.png",
+      "file": "assets/art/p1/avatar-3.webp"
+    },
+    "p1/avatar-4": {
+      "state": "ingested",
+      "from": "/home/ubuntu/.cursor/projects/workspace/uploads/soft3d-batch1/soft3d/p1/avatar-4.png",
+      "file": "assets/art/p1/avatar-4.webp"
+    },
+    "p1/avatar-5": {
+      "state": "ingested",
+      "from": "/home/ubuntu/.cursor/projects/workspace/uploads/soft3d-batch1/soft3d/p1/avatar-5.png",
+      "file": "assets/art/p1/avatar-5.webp"
+    },
+    "p1/avatar-6": {
+      "state": "ingested",
+      "from": "/home/ubuntu/.cursor/projects/workspace/uploads/soft3d-batch1/soft3d/p1/avatar-6.png",
+      "file": "assets/art/p1/avatar-6.webp"
+    },
+    "p1/avatar-add": {
+      "state": "ingested",
+      "from": "/home/ubuntu/.cursor/projects/workspace/uploads/soft3d-batch1/soft3d/p1/avatar-add.png",
+      "file": "assets/art/p1/avatar-add.webp"
+    },
+    "p1/lang-english": {
+      "state": "ingested",
+      "from": "/home/ubuntu/.cursor/projects/workspace/uploads/soft3d-batch1/soft3d/p1/lang-english.png",
+      "file": "assets/art/p1/lang-english.webp"
+    },
+    "p1/lang-somali": {
+      "state": "ingested",
+      "from": "/home/ubuntu/.cursor/projects/workspace/uploads/soft3d-batch1/soft3d/p1/lang-somali.png",
+      "file": "assets/art/p1/lang-somali.webp"
+    },
+    "banana": {
+      "state": "derived",
+      "from": "/home/ubuntu/.cursor/projects/workspace/uploads/soft3d-batch1/soft3d/hub-feed.png",
+      "file": "assets/art/banana.webp",
+      "note": "Cropped from hub-feed. No banana plate was in the batch."
+    }
+  },
+  "missing": [],
+  "finalArt": true
+}
