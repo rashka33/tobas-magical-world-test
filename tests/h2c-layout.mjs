@@ -1,5 +1,5 @@
 /**
- * Playwright layout checks for the Bluey hub overlay (build 2026-10-30-bluey-h2d).
+ * Playwright layout checks for the Bluey hub overlay (build 2026-10-30-bluey-h2e).
  * Chromium + iPhone user agent. Asserts tap targets stay fully inside the viewport
  * (a banana cut off by the landscape board fails) and memory cards do not overlap.
  *
@@ -233,7 +233,7 @@ async function main() {
   const sw = readFileSync(join(root, "sw.js"), "utf8");
   const index = readFileSync(join(root, "index.html"), "utf8");
   const hub = readFileSync(join(root, "assets/bluey-hub.js"), "utf8");
-  check("sw versioned cache", sw.includes('var CACHE = "tcw-" + BUILD_ID') && sw.includes("2026-10-30-bluey-h2d"));
+  check("sw versioned cache", sw.includes('var CACHE = "tcw-" + BUILD_ID') && sw.includes("2026-10-30-bluey-h2e"));
   check("sw precaches hub and art", ["bluey-hub.css", "bluey-hub.js", "hub-feed.webp", "leo-wave.webp", "banana.webp"].every((s) => sw.includes(s)));
   check("sw network-first index.html", /function networkFirst/.test(sw) && /isIndex\(url\)/.test(sw) && sw.includes("networkFirst(req)"));
   check("index wires hub and one-line bridge", index.includes("assets/bluey-hub.css") && index.includes("assets/bluey-hub.js") && /window\.__tcwGo=function/.test(index));
@@ -277,28 +277,36 @@ async function main() {
       root: document.getElementById("bluey-root")?.getAttribute("data-build") || "",
       bridge: typeof window.__tcwGo,
     }));
-    check("build id stamped", build.stamp.includes("2026-10-30-bluey-h2d") && build.root === "2026-10-30-bluey-h2d");
+    check("build id stamped", build.stamp.includes("2026-10-30-bluey-h2e") && build.root === "2026-10-30-bluey-h2e");
     check("bridge is a function", build.bridge === "function");
 
     async function titleChecks(label, slot) {
       const info = await page.evaluate(() => {
         const b = document.querySelector("[data-logo-b]").getBoundingClientRect();
+        const logo = document.querySelector(".logo-img").getBoundingClientRect();
         const play = document.querySelector("#bluey-play").getBoundingClientRect();
         const leo = document.querySelector(".leo-title").getBoundingClientRect();
         const ix = Math.min(b.right, play.right) - Math.max(b.left, play.left);
         const iy = Math.min(b.bottom, play.bottom) - Math.max(b.top, play.top);
+        const text = document.querySelector("#bluey-root").innerText || "";
         return {
           overlap: ix > 1 && iy > 1,
           playH: play.height,
           leoW: leo.width,
           scene: document.querySelector(".title-art")?.getAttribute("data-slot") || "",
           bW: b.width,
+          gap: play.top - logo.bottom,
+          logoW: document.querySelector(".logo-img").naturalWidth,
+          preview: /preview/i.test(text),
         };
       });
       check(label + " play misses letter b", !info.overlap && info.bW > 8, JSON.stringify(info));
+      check(label + " logo sits 24px above play", info.gap >= 24, "gap " + info.gap);
       check(label + " play is huge", info.playH >= 88, "h " + info.playH);
       check(label + " leo on title", info.leoW > 36, "leo " + info.leoW);
       check(label + " title art", info.scene === slot, info.scene);
+      check(label + " logo image", info.logoW > 0);
+      check(label + " no preview watermark", !info.preview);
       const taps = await tapReport(page);
       check(label + " tap targets", taps.problems.length === 0, taps.problems.slice(0, 6).join("; "));
     }
@@ -451,14 +459,14 @@ async function main() {
   let artStatus = { missing: [], finalArt: false, sourceDirExists: false };
   try { artStatus = JSON.parse(readFileSync(join(root, "assets/art/ART-STATUS.json"), "utf8")); } catch (e) {}
   const summary = {
-    build: "2026-10-30-bluey-h2d",
+    build: "2026-10-30-bluey-h2e",
     pass: passes.length,
     fail: fails.length,
     fails,
     artFinal: !!artStatus.finalArt,
     artMissing: artStatus.missing || [],
   };
-  writeFileSync(join(outDir, "h2d-results.json"), JSON.stringify(summary, null, 2));
+  writeFileSync(join(outDir, "h2e-results.json"), JSON.stringify(summary, null, 2));
 
   const shots = [
     "title-portrait.png",
@@ -473,21 +481,21 @@ async function main() {
   ];
   const missing = (artStatus.missing || []).map((slot) => "- `" + slot + "` — expected `/workspace/toba/art/soft3d/" + slot + ".png` (or .webp). Placeholder: `assets/art/" + slot + ".webp`.");
   const report = [
-    "# REPORT h2d",
+    "# REPORT h2e",
     "",
-    "Build `2026-10-30-bluey-h2d` on branch `cursor/bluey-h2c-rebuild-7a6d`. Not merged. Not published. Live coloring-world repo was not changed.",
+    "Build `2026-10-30-bluey-h2e` on branch `cursor/bluey-h2c-rebuild-7a6d`. Not merged. Not published. Live coloring-world repo was not changed.",
     "",
-    "Kept adaptive levels (`tcw-bluey-levels`, win up, two misses down, sorter 3/5/7) and the landscape layouts (Counting two-column, Memory L3 6×2, level pills). Rebuilt the hub shell: seasonal title, sticker-circle tiles with no kid labels, Leo on the title and the hub, a press-and-hold gear instead of a Grown-ups text link, and a soft wipe between title, hub, and activities.",
+    "Soft-3D batch 1 is in the hub circles, Leo, and logo. Batch 2 title plates (`title-portrait` 720×1280, `title-landscape` 1280×720) are the seasonal title backgrounds. The logo sits above Play with at least 24px of clearance so Play does not cover the letter b. Counting's monkey is a circular crop of hub-feed. Memory card backs are leo-wave. No kid-visible preview labels. Dress-up and camel art is mapped but not shown, because those activities are not in this hub. `assets/art/p1/` is wired for later and there is no profile UI.",
     "",
-    "Offline service worker cache `tcw-2026-10-30-bluey-h2d`. Precache includes the soft-3D slots. `index.html` stays network-first.",
+    "Levels and landscape layouts are unchanged. Service worker cache is `tcw-2026-10-30-bluey-h2e` (versioned, precache, network-first index.html).",
     "",
     "## Art",
     "",
     artStatus.finalArt
-      ? "Soft-3D art was ingested from `/workspace/toba/art/soft3d/`."
-      : "The shared box `/workspace/toba/art/soft3d/` was " + (artStatus.sourceDirExists ? "incomplete" : "not on disk") + ". The ART map points at those slots. Shipped images are marked preview placeholders, not final art.",
+      ? "Ingest reported every required slot present. Titles were re-encoded from soft3d-batch2."
+      : "Ingest reported missing slots.",
     "",
-    missing.length ? missing.join("\n") : "No slots missing.",
+    missing.length ? missing.join("\n") : "No required slots missing.",
     "",
     "## Tests",
     "",
@@ -503,7 +511,7 @@ async function main() {
     ...shots.map((name) => "- `artifacts/" + name + "`"),
     "",
   ].join("\n");
-  writeFileSync(join(outDir, "REPORT-h2d.md"), report);
+  writeFileSync(join(outDir, "REPORT-h2e.md"), report);
   console.log(JSON.stringify(summary, null, 2));
   if (fails.length) process.exit(1);
 }

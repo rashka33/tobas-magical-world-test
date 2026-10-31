@@ -1,10 +1,10 @@
-/* Toba's Magical World — premium hub shell (bluey-h2d).
+/* Toba's Magical World — premium hub shell (bluey-h2e).
    Adaptive levels stay in localStorage key tcw-bluey-levels.
    ART paths match /workspace/toba/art/soft3d/ slots. P1 is not part of this build. */
 (function () {
   "use strict";
 
-  var BUILD = "2026-10-30-bluey-h2d";
+  var BUILD = "2026-10-30-bluey-h2e";
   var STORE = "tcw-bluey-levels";
   var IDS = ["bubbles", "balloons", "feed", "memory", "puzzle", "counting", "patterns", "sorter"];
 
@@ -46,7 +46,23 @@
     leoCheer: "assets/art/leo-cheer.webp",
     leoWave: "assets/art/leo-wave.webp",
     logo: "assets/art/logo-toba.webp",
-    banana: "assets/art/banana.webp"
+    banana: "assets/art/banana.webp",
+    /* Ingested and mapped. Dress-up and camel are not hub activities in this build. */
+    dressup: "assets/art/hub-dressup.webp",
+    camel: "assets/art/hub-camel.webp",
+    leoHello: "assets/art/leo-hello.webp",
+    leoTalk: "assets/art/leo-talk.webp",
+    p1: {
+      avatar1: "assets/art/p1/avatar-1.webp",
+      avatar2: "assets/art/p1/avatar-2.webp",
+      avatar3: "assets/art/p1/avatar-3.webp",
+      avatar4: "assets/art/p1/avatar-4.webp",
+      avatar5: "assets/art/p1/avatar-5.webp",
+      avatar6: "assets/art/p1/avatar-6.webp",
+      avatarAdd: "assets/art/p1/avatar-add.webp",
+      langEnglish: "assets/art/p1/lang-english.webp",
+      langSomali: "assets/art/p1/lang-somali.webp"
+    }
   };
 
   var TILE = {
@@ -205,9 +221,12 @@
       '<section class="title-screen' + (land ? " is-land" : "") + '">' +
         '<div class="title-scene">' +
           '<img class="title-art" data-slot="' + (land ? "title-landscape" : "title-portrait") + '" src="' + scene + '" alt="" />' +
-          '<div class="logo-lockup" data-logo>' +
-            '<p class="logo-word">To<span class="logo-b" data-logo-b>b</span>a</p>' +
-          "</div>" +
+        "</div>" +
+        '<div class="logo-lockup" data-logo>' +
+          '<img class="logo-img" src="' + ART.logo + '" alt="Toba" />' +
+          '<span class="logo-b" data-logo-b></span>' +
+        "</div>" +
+        '<div class="title-gap">' +
           '<img class="leo-title" src="' + ART.leoCheer + '" alt="" />' +
         "</div>" +
         '<button type="button" id="bluey-play" class="play-btn" data-tap aria-label="Play">Play</button>' +

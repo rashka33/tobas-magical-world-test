@@ -1,7 +1,7 @@
-/* Offline shell for Toba's Magical World — build 2026-10-30-bluey-h2d.
+/* Offline shell for Toba's Magical World — build 2026-10-30-bluey-h2e.
    Versioned cache. Precache the app shell and hub art.
    index.html is network-first so a fresh link is not stuck on an old shell. */
-var BUILD_ID = "2026-10-30-bluey-h2d";
+var BUILD_ID = "2026-10-30-bluey-h2e";
 var CACHE = "tcw-" + BUILD_ID;
 
 var PRECACHE = [
@@ -26,7 +26,20 @@ var PRECACHE = [
   "./assets/art/title-landscape.webp",
   "./assets/art/title-portrait.webp",
   "./assets/art/logo-toba.webp",
-  "./assets/art/banana.webp"
+  "./assets/art/banana.webp",
+  "./assets/art/hub-dressup.webp",
+  "./assets/art/hub-camel.webp",
+  "./assets/art/leo-hello.webp",
+  "./assets/art/leo-talk.webp",
+  "./assets/art/p1/avatar-1.webp",
+  "./assets/art/p1/avatar-2.webp",
+  "./assets/art/p1/avatar-3.webp",
+  "./assets/art/p1/avatar-4.webp",
+  "./assets/art/p1/avatar-5.webp",
+  "./assets/art/p1/avatar-6.webp",
+  "./assets/art/p1/avatar-add.webp",
+  "./assets/art/p1/lang-english.webp",
+  "./assets/art/p1/lang-somali.webp"
 ];
 
 self.addEventListener("install", function (event) {

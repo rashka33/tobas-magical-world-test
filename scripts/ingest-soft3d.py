@@ -8,9 +8,14 @@ import os
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-SRC = "/workspace/toba/art/soft3d"
 OUT = os.path.join(ROOT, "assets", "art")
 os.makedirs(OUT, exist_ok=True)
+
+SOURCE_DIRS = [
+    os.environ.get("SOFT3D_SRC") or "",
+    "/home/ubuntu/.cursor/projects/workspace/uploads/soft3d-batch1/soft3d",
+    "/workspace/toba/art/soft3d",
+]
 
 # Production ART map slots. p1/ is intentionally not ingested.
 SLOTS = [
@@ -31,25 +36,40 @@ SLOTS = [
 ]
 
 
-def find_source(slot):
-    if not os.path.isdir(SRC):
-        return None
-    for ext in (".webp", ".png", ".jpg", ".jpeg"):
-        path = os.path.join(SRC, slot + ext)
-        if os.path.isfile(path):
-            return path
-    # also accept files already grouped by prefix
-    for name in os.listdir(SRC):
-        stem, ext = os.path.splitext(name)
-        if stem == slot and ext.lower() in (".webp", ".png", ".jpg", ".jpeg"):
-            return os.path.join(SRC, name)
+def source_roots():
+    roots = []
+    for path in SOURCE_DIRS:
+        if path and os.path.isdir(path) and path not in roots:
+            roots.append(path)
+    return roots
+
+
+def find_source(slot, sub=""):
+    rel = os.path.join(sub, slot) if sub else slot
+    for root in source_roots():
+        for ext in (".webp", ".png", ".jpg", ".jpeg"):
+            path = os.path.join(root, rel + ext)
+            if os.path.isfile(path):
+                return path
     return None
 
 
-def save_webp(im, slot):
+def save_webp(im, slot, max_side=512):
+    im = im.convert("RGBA")
+    if max_side and max(im.size) > max_side:
+        im.thumbnail((max_side, max_side), Image.Resampling.LANCZOS)
     path = os.path.join(OUT, slot + ".webp")
+    os.makedirs(os.path.dirname(path), exist_ok=True)
     im.save(path, "WEBP", quality=86, method=6)
     return path
+
+
+def derive_banana(feed_path):
+    """Fruit crop from hub-feed so the counting button is real art, not a watermark."""
+    im = Image.open(feed_path).convert("RGBA")
+    # The big banana sits in the bowl, right of center.
+    crop = im.crop((500, 340, 860, 700))
+    return crop
 
 
 def sticker_disc(fill, label, motif):
@@ -244,27 +264,77 @@ def ingest_one(slot, src):
     return save_webp(im, slot)
 
 
+# Kid-facing slots. A missing one stops the ingest. No watermarked stand-ins.
+REQUIRED = [
+    "hub-bubbles", "hub-balloons", "hub-feed", "hub-memory", "hub-puzzle",
+    "hub-counting", "hub-patterns", "hub-sorter",
+    "leo-wave", "leo-cheer", "logo-toba",
+    "title-landscape", "title-portrait",
+]
+EXTRA = ["hub-dressup", "hub-camel", "leo-hello", "leo-talk"]
+P1 = [
+    "avatar-1", "avatar-2", "avatar-3", "avatar-4", "avatar-5", "avatar-6",
+    "avatar-add", "lang-english", "lang-somali",
+]
+# Titles stay nearer to source size. Hub circles and characters cap at 512.
+TITLE_SLOTS = {"title-landscape", "title-portrait"}
+
+
 def main():
-    status = {"sourceDir": SRC, "sourceDirExists": os.path.isdir(SRC), "slots": {}}
+    roots = source_roots()
+    status = {"sourceDirs": roots, "sourceDirExists": bool(roots), "slots": {}}
     missing = []
-    for slot in SLOTS:
-        src = find_source(slot)
-        if src:
-            save_webp(Image.open(src).convert("RGBA"), slot)
-            status["slots"][slot] = {"state": "ingested", "from": src, "file": "assets/art/" + slot + ".webp"}
-        else:
-            save_webp(placeholder(slot), slot)
-            status["slots"][slot] = {
-                "state": "placeholder",
-                "missing": os.path.join(SRC, slot + ".png"),
-                "file": "assets/art/" + slot + ".webp",
-            }
-            missing.append(slot)
+    if not roots:
+        missing = REQUIRED + EXTRA
+        status["missing"] = missing
+        status["finalArt"] = False
+        with open(os.path.join(OUT, "ART-STATUS.json"), "w", encoding="utf-8") as f:
+            json.dump(status, f, indent=2)
+        print(json.dumps({"finalArt": False, "missing": missing, "dir": False}))
+        raise SystemExit(1)
+
+    def take(slot, sub="", max_side=512):
+        src = find_source(slot, sub)
+        rel = (sub + "/" if sub else "") + slot
+        if not src:
+            missing.append(rel)
+            status["slots"][rel] = {"state": "missing"}
+            return None
+        cap = None if slot in TITLE_SLOTS else max_side
+        save_webp(Image.open(src), rel, cap)
+        status["slots"][rel] = {"state": "ingested", "from": src, "file": "assets/art/" + rel + ".webp"}
+        return src
+
+    for slot in REQUIRED + EXTRA:
+        take(slot)
+    for slot in P1:
+        take(slot, "p1")
+
+    feed = find_source("hub-feed")
+    banana_src = find_source("banana")
+    if banana_src:
+        save_webp(Image.open(banana_src), "banana", 512)
+        status["slots"]["banana"] = {"state": "ingested", "from": banana_src, "file": "assets/art/banana.webp"}
+    elif feed and "hub-feed" not in missing:
+        save_webp(derive_banana(feed), "banana", 512)
+        status["slots"]["banana"] = {
+            "state": "derived",
+            "from": feed,
+            "file": "assets/art/banana.webp",
+            "note": "Cropped from hub-feed. No banana plate was in the batch.",
+        }
+    else:
+        missing.append("banana")
+
+    # Required art must be real files. Do not write preview watermarks.
+    required_missing = [name for name in missing if not name.startswith("p1/") and name not in ("banana",)]
     status["missing"] = missing
-    status["finalArt"] = len(missing) == 0
+    status["finalArt"] = len(required_missing) == 0
     with open(os.path.join(OUT, "ART-STATUS.json"), "w", encoding="utf-8") as f:
         json.dump(status, f, indent=2)
-    print(json.dumps({"finalArt": status["finalArt"], "missing": missing, "dir": status["sourceDirExists"]}))
+    print(json.dumps({"finalArt": status["finalArt"], "missing": missing, "dirs": roots}))
+    if required_missing:
+        raise SystemExit(1)
 
 
 if __name__ == "__main__":
